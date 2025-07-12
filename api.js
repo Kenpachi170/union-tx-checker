@@ -18,16 +18,21 @@ export const getTransactionCount = async () => {
     }
   `;
 
-  const data = await client.request(query);
-  const transfers = data.v2_transfers;
-  const packets = data.v1_packets;
+  try {
+    const data = await client.request(query);
+    const transfers = data.v2_transfers || [];
+    const packets = data.v1_packets || [];
+    const allTxns = [...transfers, ...packets];
+    const chainCounts = {};
 
-  const allTxns = [...transfers, ...packets];
-  const chainCounts = {};
+    chains.forEach(chain => {
+      chainCounts[chain] = allTxns.filter(tx => tx.asset?.chain === chain).length;
+    });
 
-  chains.forEach(chain => {
-    chainCounts[chain] = allTxns.filter(tx => tx.asset.chain === chain).length;
-  });
-
-  return chainCounts;
+    console.log('Transaction Counts:', chainCounts); // Log for debugging
+    return chainCounts;
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    return {};
+  }
 };
